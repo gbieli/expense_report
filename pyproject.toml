@@ -5,6 +5,7 @@ description = ""
 authors = ["gbieli <gery.bieli@gmx.ch>"]
 readme = "README.md"
 packages = [{include = "expense_report", from = "src"}]
+license = "GPL-3.0-only"
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -21,6 +22,9 @@ bandit = "^1.7.9"
 [tool.poetry.group.dev.dependencies]
 isort = "^5.13.2"
 black = "^24.4.2"
+
+[tool.poetry.group.audit.dependencies]
+licensecheck = "^2024.2"
 
 [build-system]
 requires = ["poetry-core"]
