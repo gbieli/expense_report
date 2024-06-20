@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "expense-report"
+version = "0.1.0"
+description = ""
+authors = ["gbieli <gery.bieli@gmx.ch>"]
+readme = "README.md"
+packages = [{include = "expense_report", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+tabula-py = "2.9.3"
+openpyxl = "3.1.4"
+pandas = "2.2.2"
+JPype1 = "1.5.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
