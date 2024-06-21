@@ -33,46 +33,37 @@ class PDFExtractor(Extractor, ABC):
         self.bill_name = self.pdf_file_path.name
 
     def to_data_frame(self):
-        logger.info(f"{self.bill_name}: extracting text from pdf")
-        pdf_reader = PdfReader(self.pdf_file_path)
-        pdf_text = ""
-        for page in pdf_reader.pages:
-            pdf_text += page.extract_text() + "\n"
+        pdf_text = self.pdf_extract_text()
 
-        logger.info(f"{self.bill_name}: extracting bill_sum")
-        parser = ttp(data=pdf_text, template=self.bill_sum_ttp_template)
-        parser.parse()
-        ttp_parsed = parser.result()
-        bill_sum = float(ttp_parsed[0][0]["bill_sum"].replace("'", ""))
+        bill_sum = self.extract_bill_sum(pdf_text)
 
         logger.info(f"{self.bill_name}: extracting tables from pdf")
         dfs_from_pdf = tabula.read_pdf(self.pdf_file_path, pages="all")
 
-        # drop bonus table
-        logger.info(f"{self.bill_name}: dropping table with bonus amounts")
+        # drop table matching header keyword
+        logger.info(f"{self.bill_name}: dropping table matching header keyword")
         if self.drop_table_header_keyword in str(dfs_from_pdf[-1].columns.to_list()):
             del dfs_from_pdf[-1]
 
+        return self.prepare_data_frame(dfs_from_pdf, bill_sum)
+
+    def prepare_data_frame(self, dfs_from_pdf, bill_sum):
         logger.info(f"{self.bill_name}: preparing data")
         # concat
         df = pd.concat(dfs_from_pdf)
-
         # insert new column with filename
         df.insert(1, self.column_names.data_origin, self.bill_name)
-
         # convert to date
         df[self.column_names.shop_date] = pd.to_datetime(
             df[self.column_names.shop_date], format="%d.%m.%Y"
         )
         df = df.sort_values(by=self.column_names.shop_date)
-
         # convert number columns
         number_columns = [self.column_names.charge, self.column_names.credit]
         for number_column in number_columns:
             df[number_column] = pd.to_numeric(
                 df[number_column].astype(str).str.replace("'", ""), errors="coerce"
             )
-
         # filter lines to generate the sum
         logger.info(f"{self.bill_name}: remove lines {str(self.lines_to_remove)}")
         for line_to_remove in self.lines_to_remove:
@@ -80,7 +71,6 @@ class PDFExtractor(Extractor, ABC):
                 line_to_remove
             )
             df = df[~filter_df]
-
         charge_sum_value = df[self.column_names.charge].dropna().sum()
         if (charge_sum_value - bill_sum) < 1:
             logger.info(
@@ -95,6 +85,22 @@ class PDFExtractor(Extractor, ABC):
             )
             logger.error(f"{self.bill_name}: {error_msg}")
             raise SanityCheckError(error_msg)
+
+    def extract_bill_sum(self, pdf_text):
+        logger.info(f"{self.bill_name}: extracting bill_sum")
+        parser = ttp(data=pdf_text, template=self.bill_sum_ttp_template)
+        parser.parse()
+        ttp_parsed = parser.result()
+        bill_sum = float(ttp_parsed[0][0]["bill_sum"].replace("'", ""))
+        return bill_sum
+
+    def pdf_extract_text(self):
+        logger.info(f"{self.bill_name}: extracting text from pdf")
+        pdf_reader = PdfReader(self.pdf_file_path)
+        pdf_text = ""
+        for page in pdf_reader.pages:
+            pdf_text += page.extract_text() + "\n"
+        return pdf_text
 
 
 class CembraBillPDFExtractor(PDFExtractor):
