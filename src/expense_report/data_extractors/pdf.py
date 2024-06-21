@@ -1,4 +1,5 @@
 from abc import ABC
+from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
@@ -11,7 +12,25 @@ from expense_report.data_extractors.common import Extractor
 from expense_report.exceptions import SanityCheckError
 
 
+@dataclass
+class ColumnNames:
+    shop_date: str
+    charge: str
+    credit: str
+    transaction_description: str
+    data_origin: str
+
+
 class PDFExtractor(Extractor, ABC):
+    column_names: ColumnNames
+    bill_sum_text: str
+    bill_sum_ttp_template: str
+    lines_to_remove: list
+    drop_table_header_keyword: str
+
+    def __init__(self, pdf_file_path: Path):
+        self.pdf_file_path = pdf_file_path
+        self.bill_name = self.pdf_file_path.name
 
     def to_data_frame(self):
         logger.info(f"{self.bill_name}: extracting text from pdf")
@@ -31,8 +50,7 @@ class PDFExtractor(Extractor, ABC):
 
         # drop bonus table
         logger.info(f"{self.bill_name}: dropping table with bonus amounts")
-        if self.drop_table_header_keyword in str(
-            dfs_from_pdf[-1].columns.to_list()):
+        if self.drop_table_header_keyword in str(dfs_from_pdf[-1].columns.to_list()):
             del dfs_from_pdf[-1]
 
         logger.info(f"{self.bill_name}: preparing data")
@@ -40,32 +58,30 @@ class PDFExtractor(Extractor, ABC):
         df = pd.concat(dfs_from_pdf)
 
         # insert new column with filename
-        df.insert(1, self.data_origin_column_name, self.bill_name)
+        df.insert(1, self.column_names.data_origin, self.bill_name)
 
         # convert to date
-        df[self.date_column_name] = pd.to_datetime(
-            df[self.date_column_name], format="%d.%m.%Y"
+        df[self.column_names.shop_date] = pd.to_datetime(
+            df[self.column_names.shop_date], format="%d.%m.%Y"
         )
-        df = df.sort_values(by=self.date_column_name)
+        df = df.sort_values(by=self.column_names.shop_date)
 
         # convert number columns
-        number_columns = [self.charge_column_name, self.credit_column_name]
+        number_columns = [self.column_names.charge, self.column_names.credit]
         for number_column in number_columns:
             df[number_column] = pd.to_numeric(
-                df[number_column].astype(str).str.replace("'", ""),
-                errors="coerce"
+                df[number_column].astype(str).str.replace("'", ""), errors="coerce"
             )
 
         # filter lines to generate the sum
-        logger.info(
-            f"{self.bill_name}: remove lines {str(self.lines_to_remove)}")
+        logger.info(f"{self.bill_name}: remove lines {str(self.lines_to_remove)}")
         for line_to_remove in self.lines_to_remove:
-            filter_df = df[
-                self.transaction_description_column_name].str.contains(
-                line_to_remove)
+            filter_df = df[self.column_names.transaction_description].str.contains(
+                line_to_remove
+            )
             df = df[~filter_df]
 
-        charge_sum_value = df[self.charge_column_name].dropna().sum()
+        charge_sum_value = df[self.column_names.charge].dropna().sum()
         if (charge_sum_value - bill_sum) < 1:
             logger.info(
                 f"{self.bill_name}: sum {charge_sum_value} matches "
@@ -82,17 +98,15 @@ class PDFExtractor(Extractor, ABC):
 
 
 class CembraBillPDFExtractor(PDFExtractor):
-    date_column_name = "Einkaufs-Datum"
-    charge_column_name = "Belastung CHF"
-    credit_column_name = "Gutschrift CHF"
-    transaction_description_column_name = "Beschreibung"
-    data_origin_column_name = "Datenherkunft"
+    column_names = ColumnNames(
+        shop_date="Einkaufs-Datum",
+        charge="Belastung CHF",
+        credit="Gutschrift CHF",
+        transaction_description="Beschreibung",
+        data_origin="Datenherkunft",
+    )
+
     bill_sum_text = "Neue Belastungen CHF"
     bill_sum_ttp_template = f"{bill_sum_text} {{{{ bill_sum }}}}"
-    lines_to_remove = ["Ihre LSV-Zahlung - Besten Dank",
-                       "Saldovortrag letzte Rechnung"]
+    lines_to_remove = ["Ihre LSV-Zahlung - Besten Dank", "Saldovortrag letzte Rechnung"]
     drop_table_header_keyword = "ckverg"
-
-    def __init__(self, pdf_file_path: Path):
-        self.pdf_file_path = pdf_file_path
-        self.bill_name = self.pdf_file_path.name
