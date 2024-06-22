@@ -37,8 +37,7 @@ class PDFExtractor(Extractor, ABC):
 
         bill_sum = self.extract_bill_sum(pdf_text)
 
-        logger.info(f"{self.bill_name}: extracting tables from pdf")
-        dfs_from_pdf = tabula.read_pdf(self.pdf_file_path, pages="all")
+        dfs_from_pdf = self.extract_tables_from_pdf()
 
         # drop table matching header keyword
         logger.info(f"{self.bill_name}: dropping table matching header keyword")
@@ -46,6 +45,11 @@ class PDFExtractor(Extractor, ABC):
             del dfs_from_pdf[-1]
 
         return self.prepare_data_frame(dfs_from_pdf, bill_sum)
+
+    def extract_tables_from_pdf(self):
+        logger.info(f"{self.bill_name}: extracting tables from pdf")
+        dfs_from_pdf = tabula.read_pdf(self.pdf_file_path, pages="all")
+        return dfs_from_pdf
 
     def prepare_data_frame(self, dfs_from_pdf, bill_sum):
         logger.info(f"{self.bill_name}: preparing data")
