@@ -1,5 +1,4 @@
 from abc import ABC
-from pathlib import Path
 
 import pandas as pd
 import tabula
@@ -17,10 +16,6 @@ class PDFFileExtractor(Extractor, ABC):
     lines_to_remove: list
     drop_table_header_keyword: str
 
-    def __init__(self, pdf_file_path: Path):
-        self.pdf_file_path = pdf_file_path
-        self.bill_name = self.pdf_file_path.name
-
     def to_data_frame(self):
         pdf_text = self._pdf_extract_text()
 
@@ -29,23 +24,23 @@ class PDFFileExtractor(Extractor, ABC):
         dfs_from_pdf = self._extract_tables_from_pdf()
 
         # drop table matching header keyword
-        logger.info(f"{self.bill_name}: dropping table matching header keyword")
+        logger.info(f"{self.file_name}: dropping table matching header keyword")
         if self.drop_table_header_keyword in str(dfs_from_pdf[-1].columns.to_list()):
             del dfs_from_pdf[-1]
 
         return self._prepare_data_frame(dfs_from_pdf, bill_sum)
 
     def _extract_tables_from_pdf(self):
-        logger.info(f"{self.bill_name}: extracting tables from pdf")
-        dfs_from_pdf = tabula.read_pdf(self.pdf_file_path, pages="all")
+        logger.info(f"{self.file_name}: extracting tables from pdf")
+        dfs_from_pdf = tabula.read_pdf(self.file_path, pages="all")
         return dfs_from_pdf
 
     def _prepare_data_frame(self, dfs_from_pdf, bill_sum):
-        logger.info(f"{self.bill_name}: preparing data")
+        logger.info(f"{self.file_name}: preparing data")
         # concat
         df = pd.concat(dfs_from_pdf)
         # insert new column with filename
-        df.insert(1, self.column_names.data_origin, self.bill_name)
+        df.insert(1, self.column_names.data_origin, self.file_name)
         # convert to date
         df[self.column_names.shop_date] = pd.to_datetime(
             df[self.column_names.shop_date], format="%d.%m.%Y"
@@ -58,7 +53,7 @@ class PDFFileExtractor(Extractor, ABC):
                 df[number_column].astype(str).str.replace("'", ""), errors="coerce"
             )
         # filter lines to generate the sum
-        logger.info(f"{self.bill_name}: remove lines {str(self.lines_to_remove)}")
+        logger.info(f"{self.file_name}: remove lines {str(self.lines_to_remove)}")
         for line_to_remove in self.lines_to_remove:
             filter_df = df[self.column_names.transaction_description].str.contains(
                 line_to_remove
@@ -67,7 +62,7 @@ class PDFFileExtractor(Extractor, ABC):
         charge_sum_value = df[self.column_names.charge].dropna().sum()
         if (charge_sum_value - bill_sum) < 1:
             logger.info(
-                f"{self.bill_name}: sum {charge_sum_value} matches "
+                f"{self.file_name}: sum {charge_sum_value} matches "
                 f"expected value {bill_sum}"
             )
             return df
@@ -76,11 +71,11 @@ class PDFFileExtractor(Extractor, ABC):
                 f"Calculated sum '{charge_sum_value}' "
                 f"does not match '{self.bill_sum_text}' {bill_sum}"
             )
-            logger.error(f"{self.bill_name}: {error_msg}")
+            logger.error(f"{self.file_name}: {error_msg}")
             raise SanityCheckError(error_msg)
 
     def _extract_bill_sum(self, pdf_text):
-        logger.info(f"{self.bill_name}: extracting bill_sum")
+        logger.info(f"{self.file_name}: extracting bill_sum")
         parser = ttp(data=pdf_text, template=self.bill_sum_ttp_template)
         parser.parse()
         ttp_parsed = parser.result()
@@ -88,8 +83,8 @@ class PDFFileExtractor(Extractor, ABC):
         return bill_sum
 
     def _pdf_extract_text(self):
-        logger.info(f"{self.bill_name}: extracting text from pdf")
-        pdf_reader = PdfReader(self.pdf_file_path)
+        logger.info(f"{self.file_name}: extracting text from pdf")
+        pdf_reader = PdfReader(self.file_path)
         pdf_text = ""
         for page in pdf_reader.pages:
             pdf_text += page.extract_text() + "\n"

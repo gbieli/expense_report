@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass
@@ -18,6 +19,10 @@ class Extractor(ABC):
     """
 
     column_names: ColumnNames
+
+    def __init__(self, pdf_file_path: Path):
+        self.file_path = pdf_file_path
+        self.file_name = self.file_path.name
 
     @abstractmethod
     def to_data_frame(self):
