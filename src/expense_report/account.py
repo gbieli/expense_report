@@ -62,7 +62,7 @@ class Account:
         # Write dataframe to excel
         logger.info(f"Generating Excel file at '{self.excel_file_path}'")
         with pd.ExcelWriter(self.excel_file_path) as writer:
-            df.to_excel(writer, sheet_name=str(self.account_type))
+            df.to_excel(writer, sheet_name=str(self.account_type.name))
             df_pivot_beschreibung.to_excel(writer, sheet_name="pivot_beschreibung")
             df_pivot_kategorie.to_excel(writer, sheet_name="pivot_kategorie")
 
