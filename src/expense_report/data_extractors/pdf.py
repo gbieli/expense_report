@@ -1,5 +1,4 @@
 from abc import ABC
-from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
@@ -8,21 +7,11 @@ from loguru import logger
 from pypdf import PdfReader
 from ttp import ttp
 
-from expense_report.data_extractors.base import Extractor
+from expense_report.data_extractors.base import ColumnNames, Extractor
 from expense_report.exceptions import SanityCheckError
 
 
-@dataclass
-class ColumnNames:
-    shop_date: str
-    charge: str
-    credit: str
-    transaction_description: str
-    data_origin: str
-
-
 class PDFFileExtractor(Extractor, ABC):
-    column_names: ColumnNames
     bill_sum_text: str
     bill_sum_ttp_template: str
     lines_to_remove: list
