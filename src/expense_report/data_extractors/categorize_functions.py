@@ -15,7 +15,7 @@ def beschreibung_category(beschreibung):
 
 def categories_and_keywords_by_keyword():
     """
-    Invert de data categories structure.
+    Invert the data categories structure.
     :return:
     """
     keywords_and_categories = {}
