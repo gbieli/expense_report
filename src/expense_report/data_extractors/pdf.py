@@ -8,7 +8,8 @@ from loguru import logger
 from pypdf import PdfReader
 from ttp import ttp
 
-from expense_report.data_extractors.common import Extractor
+from expense_report.data_extractors.base import Extractor
+from expense_report.data_extractors.common import beschreibung_category
 from expense_report.exceptions import SanityCheckError
 
 
@@ -105,6 +106,32 @@ class PDFExtractor(Extractor, ABC):
         for page in pdf_reader.pages:
             pdf_text += page.extract_text() + "\n"
         return pdf_text
+
+    @staticmethod
+    def pdfs_to_excel(pdf_files, excel_file_path: Path, sheet_name: str,
+                      extractor_class: "PDFExtractor"):
+        df_list = []
+        for pdf_file_path in pdf_files:
+            df_from_pdf = extractor_class(pdf_file_path).to_data_frame()
+            df_list.append(df_from_pdf)
+        df = pd.concat(df_list)
+        df["Jahr"] = df["Einkaufs-Datum"].dt.year
+        df["Kategorie"] = df["Beschreibung"].apply(beschreibung_category)
+        df_pivot_beschreibung = df.pivot_table(values="Belastung CHF",
+                                               index="Beschreibung",
+                                               columns="Jahr", aggfunc="sum",
+                                               fill_value=0.0)
+        df_pivot_kategorie = df.pivot_table(values="Belastung CHF", index="Kategorie",
+                                            columns="Jahr", aggfunc="sum",
+                                            fill_value=0.0)
+        logger.info(f"Resulting dataframe: {str(df)}")
+
+        # Write dataframe to excel
+        logger.info(f"Generating Excel file at '{excel_file_path}'")
+        with pd.ExcelWriter(excel_file_path) as writer:
+            df.to_excel(writer, sheet_name=sheet_name)
+            df_pivot_beschreibung.to_excel(writer, sheet_name="pivot_beschreibung")
+            df_pivot_kategorie.to_excel(writer, sheet_name="pivot_kategorie")
 
 
 class CembraBillPDFExtractor(PDFExtractor):

@@ -1,7 +1,26 @@
-from abc import abstractmethod
+from expense_report.private import categories_and_keywords
 
 
-class Extractor:
-    @abstractmethod
-    def to_data_frame(self):
-        pass
+def beschreibung_category(beschreibung):
+    """
+    Used in pandas df apply function to categorize expense.
+    :param beschreibung: pandas "Beschreibung" field
+    :return:
+    """
+    for keyword, category in categories_and_keywords_by_keyword().items():
+        if keyword in beschreibung.lower():
+            return category
+    return "unkategorisiert"
+
+
+def categories_and_keywords_by_keyword():
+    """
+    Invert de data categories structure.
+    :return:
+    """
+    keywords_and_categories = {}
+    for category, keywords in categories_and_keywords.items():
+        for keyword in keywords:
+            keywords_and_categories[keyword] = category
+
+    return keywords_and_categories
