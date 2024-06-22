@@ -19,6 +19,7 @@ class Extractor(ABC):
     """
 
     column_names: ColumnNames
+    file_type: str
 
     def __init__(self, pdf_file_path: Path):
         self.file_path = pdf_file_path

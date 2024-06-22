@@ -100,6 +100,7 @@ class CembraPDFFileExtractor(PDFFileExtractor):
         data_origin="Datenherkunft",
     )
 
+    file_type = "pdf"
     bill_sum_text = "Neue Belastungen CHF"
     bill_sum_ttp_template = f"{bill_sum_text} {{{{ bill_sum }}}}"
     lines_to_remove = ["Ihre LSV-Zahlung - Besten Dank", "Saldovortrag letzte Rechnung"]
