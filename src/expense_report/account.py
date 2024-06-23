@@ -45,17 +45,19 @@ class Account:
             df_from_file = self.file_extractor_type(file_path).to_data_frame()
             df_list.append(df_from_file)
         df = pd.concat(df_list)
-        df["Jahr"] = df["Einkaufs-Datum"].dt.year
-        df["Kategorie"] = df["Beschreibung"].apply(beschreibung_category)
+        df["Jahr"] = df[self.file_extractor_type.column_names.shop_date].dt.year
+        df["Kategorie"] = df[
+            self.file_extractor_type.column_names.transaction_description].apply(
+            beschreibung_category)
         df_pivot_beschreibung = df.pivot_table(
-            values="Belastung CHF",
-            index="Beschreibung",
+            values=self.file_extractor_type.column_names.charge,
+            index=self.file_extractor_type.column_names.transaction_description,
             columns="Jahr",
             aggfunc="sum",
             fill_value=0.0,
         )
         df_pivot_kategorie = df.pivot_table(
-            values="Belastung CHF",
+            values=self.file_extractor_type.column_names.charge,
             index="Kategorie",
             columns="Jahr",
             aggfunc="sum",
