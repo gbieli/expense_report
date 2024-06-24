@@ -1,6 +1,7 @@
-from expense_report.data_extractors.base import Extractor, ColumnNames
 import pandas as pd
 from loguru import logger
+
+from expense_report.data_extractors.base import ColumnNames, Extractor
 
 
 class CSVFileExtractor(Extractor):
@@ -21,6 +22,12 @@ class NeonCSVFileExtractor(CSVFileExtractor):
 
     def to_data_frame(self):
         df = pd.read_csv(self.file_path, sep=self.separator)
+        # combine description and subject columns
+        df["Subject"] = df["Subject"].fillna("")
+        df[self.column_names.transaction_description] = (
+            df[self.column_names.transaction_description] + " " + df["Subject"]
+        )
+        df = df.drop("Subject", axis=1)
         amount_column_name = "Amount"
         # copy column
         df[self.column_names.charge] = df[amount_column_name]

@@ -29,8 +29,7 @@ class Account:
 
     @staticmethod
     def get_account_instance(
-        account_type: AccountTypes, identifier: str, path: Path,
-        excel_file_path: Path
+        account_type: AccountTypes, identifier: str, path: Path, excel_file_path: Path
     ):
         for subclass in Account.__subclasses__():
             if subclass.account_type.name == account_type:
@@ -47,10 +46,11 @@ class Account:
         df = pd.concat(df_list)
         df["Jahr"] = df[self.file_extractor_type.column_names.shop_date].dt.year
         df["Wochentag"] = df[
-            self.file_extractor_type.column_names.shop_date].dt.day_name()
+            self.file_extractor_type.column_names.shop_date
+        ].dt.day_name()
         df["Kategorie"] = df[
-            self.file_extractor_type.column_names.transaction_description].apply(
-            beschreibung_category)
+            self.file_extractor_type.column_names.transaction_description
+        ].apply(beschreibung_category)
         df_pivot_beschreibung = df.pivot_table(
             values=self.file_extractor_type.column_names.charge,
             index=self.file_extractor_type.column_names.transaction_description,
