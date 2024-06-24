@@ -46,6 +46,8 @@ class Account:
             df_list.append(df_from_file)
         df = pd.concat(df_list)
         df["Jahr"] = df[self.file_extractor_type.column_names.shop_date].dt.year
+        df["Wochentag"] = df[
+            self.file_extractor_type.column_names.shop_date].dt.day_name()
         df["Kategorie"] = df[
             self.file_extractor_type.column_names.transaction_description].apply(
             beschreibung_category)
