@@ -39,19 +39,7 @@ class PDFFileExtractor(Extractor, ABC):
         logger.info(f"{self.file_name}: preparing data")
         # concat
         df = pd.concat(dfs_from_pdf)
-        # insert new column with filename
-        df.insert(1, self.column_names.data_origin, self.file_name)
-        # convert to date
-        df[self.column_names.shop_date] = pd.to_datetime(
-            df[self.column_names.shop_date], format="%d.%m.%Y"
-        )
-        df = df.sort_values(by=self.column_names.shop_date)
-        # convert number columns
-        number_columns = [self.column_names.charge, self.column_names.credit]
-        for number_column in number_columns:
-            df[number_column] = pd.to_numeric(
-                df[number_column].astype(str).str.replace("'", ""), errors="coerce"
-            )
+        df = self._insert_convert(df, "%d.%m.%Y")
         # filter lines to generate the sum
         logger.info(f"{self.file_name}: remove lines {str(self.lines_to_remove)}")
         for line_to_remove in self.lines_to_remove:
@@ -100,6 +88,7 @@ class CembraPDFFileExtractor(PDFFileExtractor):
         data_origin="Datenherkunft",
     )
 
+    file_type = "pdf"
     bill_sum_text = "Neue Belastungen CHF"
     bill_sum_ttp_template = f"{bill_sum_text} {{{{ bill_sum }}}}"
     lines_to_remove = ["Ihre LSV-Zahlung - Besten Dank", "Saldovortrag letzte Rechnung"]

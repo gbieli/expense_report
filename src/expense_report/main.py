@@ -13,7 +13,7 @@ def main():
         a = Account.get_account_instance(
             account_type,
             "hk_cembra",
-            list(p.glob("*.pdf")),
+            p,
             p / f"{account_type}_combined.xlsx",
         )
         a.generate_excel()

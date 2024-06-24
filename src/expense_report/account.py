@@ -5,11 +5,13 @@ import pandas as pd
 from loguru import logger
 
 from expense_report.categorize_functions import beschreibung_category
+from expense_report.data_extractors.csv import NeonCSVFileExtractor
 from expense_report.data_extractors.pdf import CembraPDFFileExtractor
 
 
 class AccountTypes(Enum):
     cembra = CembraPDFFileExtractor
+    neon = NeonCSVFileExtractor
 
 
 class Account:
@@ -19,39 +21,43 @@ class Account:
 
     account_type: AccountTypes
 
-    def __init__(self, identifier: str, data_files: list[Path], excel_file_path: Path):
+    def __init__(self, identifier: str, path: Path, excel_file_path: Path):
         self.identifier = identifier
         self.file_extractor_type = self.account_type.value
-        self.data_files = data_files
+        self.path = path
         self.excel_file_path = excel_file_path
 
     @staticmethod
     def get_account_instance(
-        account_type: AccountTypes, identifier: str, data_files, excel_file_path: Path
+        account_type: AccountTypes, identifier: str, path: Path,
+        excel_file_path: Path
     ):
         for subclass in Account.__subclasses__():
             if subclass.account_type.name == account_type:
-                return subclass(identifier, data_files, excel_file_path)
+                return subclass(identifier, path, excel_file_path)
 
     def generate_excel(
         self,
     ):
         df_list = []
-        for file_path in self.data_files:
+        data_files = list(self.path.glob(f"*.{self.file_extractor_type.file_type}"))
+        for file_path in data_files:
             df_from_file = self.file_extractor_type(file_path).to_data_frame()
             df_list.append(df_from_file)
         df = pd.concat(df_list)
-        df["Jahr"] = df["Einkaufs-Datum"].dt.year
-        df["Kategorie"] = df["Beschreibung"].apply(beschreibung_category)
+        df["Jahr"] = df[self.file_extractor_type.column_names.shop_date].dt.year
+        df["Kategorie"] = df[
+            self.file_extractor_type.column_names.transaction_description].apply(
+            beschreibung_category)
         df_pivot_beschreibung = df.pivot_table(
-            values="Belastung CHF",
-            index="Beschreibung",
+            values=self.file_extractor_type.column_names.charge,
+            index=self.file_extractor_type.column_names.transaction_description,
             columns="Jahr",
             aggfunc="sum",
             fill_value=0.0,
         )
         df_pivot_kategorie = df.pivot_table(
-            values="Belastung CHF",
+            values=self.file_extractor_type.column_names.charge,
             index="Kategorie",
             columns="Jahr",
             aggfunc="sum",
@@ -69,3 +75,7 @@ class Account:
 
 class CembraAccount(Account):
     account_type = AccountTypes.cembra
+
+
+class NeonAccount(Account):
+    account_type = AccountTypes.neon
