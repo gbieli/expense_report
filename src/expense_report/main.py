@@ -8,13 +8,13 @@ from expense_report.private import paths_account_files
 
 def main():
     logger.info("Start")
-    for account_type, path in paths_account_files.items():
-        p = Path(path)
+    for account_name, params in paths_account_files.items():
+        p = Path(params["path"])
         a = Account.get_account_instance(
-            account_type,
-            "hk_cembra",
+            params["account_type"],
+            account_name,
             p,
-            p / f"{account_type}_combined.xlsx",
+            p / f"{params["account_type"]}_combined.xlsx",
         )
         a.generate_excel()
 

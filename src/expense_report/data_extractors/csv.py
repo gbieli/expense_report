@@ -1,10 +1,12 @@
+from abc import ABC
+
 import pandas as pd
 from loguru import logger
 
 from expense_report.data_extractors.base import ColumnNames, Extractor
 
 
-class CSVFileExtractor(Extractor):
+class CSVFileExtractor(Extractor, ABC):
     column_names: ColumnNames
     file_type = "csv"
     separator: str
@@ -41,5 +43,31 @@ class NeonCSVFileExtractor(CSVFileExtractor):
         df = df.rename(columns={amount_column_name: self.column_names.credit})
         # insert and convert
         df = self._insert_convert(df, "%Y-%m-%d")
+        logger.info(f"{self.file_name}: data frame {str(df)}")
+        return df
+
+
+class PostFinanceCSVFileExtractor(CSVFileExtractor):
+    # Datum;Bewegungstyp;Avisierungstext;Gutschrift in CHF;Lastschrift in CHF;Label;Kategorie
+    column_names = ColumnNames(
+        shop_date="Datum",
+        charge="Lastschrift in CHF",
+        credit="Gutschrift in CHF",
+        transaction_description="Avisierungstext",
+        data_origin="Datenherkunft",
+    )
+    separator = ";"
+
+    def to_data_frame(self):
+        df = pd.read_csv(self.file_path, sep=self.separator, skiprows=5)
+        # drop disclaimer
+        df = df[
+            df[self.column_names.shop_date].str.contains(
+                "Disclaimer|Der Dokumentinhalt"
+            )
+            == False
+        ]
+        # insert and convert
+        df = self._insert_convert(df, "%d.%m.%Y")
         logger.info(f"{self.file_name}: data frame {str(df)}")
         return df

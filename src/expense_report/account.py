@@ -5,13 +5,15 @@ import pandas as pd
 from loguru import logger
 
 from expense_report.categorize_functions import beschreibung_category
-from expense_report.data_extractors.csv import NeonCSVFileExtractor
+from expense_report.data_extractors.csv import (NeonCSVFileExtractor,
+                                                PostFinanceCSVFileExtractor)
 from expense_report.data_extractors.pdf import CembraPDFFileExtractor
 
 
 class AccountTypes(Enum):
     cembra = CembraPDFFileExtractor
     neon = NeonCSVFileExtractor
+    post_finance = PostFinanceCSVFileExtractor
 
 
 class Account:
@@ -81,3 +83,7 @@ class CembraAccount(Account):
 
 class NeonAccount(Account):
     account_type = AccountTypes.neon
+
+
+class PostFinanceAccount(Account):
+    account_type = AccountTypes.post_finance
