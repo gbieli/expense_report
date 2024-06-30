@@ -7,7 +7,7 @@ static-test:
 	poetry run bandit -r .
 
 unittest:
-	poetry run pytest
+	poetry run pytest --cov --cov-fail-under=96 --junit-xml=reports/junit_report.xml
 
 audit:
 	poetry show -o

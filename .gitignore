@@ -168,3 +168,4 @@ cython_debug/
 /src/expense_report/private_settings.py
 TODO.md
 /tests/outputs/
+/reports/*.xml
