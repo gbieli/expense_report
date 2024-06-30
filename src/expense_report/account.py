@@ -1,19 +1,10 @@
-from enum import Enum
 from pathlib import Path
 
 import pandas as pd
 from loguru import logger
 
 from expense_report.categorize_functions import beschreibung_category
-from expense_report.data_extractors.csv import (NeonCSVFileExtractor,
-                                                PostFinanceCSVFileExtractor)
-from expense_report.data_extractors.pdf import CembraPDFFileExtractor
-
-
-class AccountTypes(Enum):
-    cembra = CembraPDFFileExtractor
-    neon = NeonCSVFileExtractor
-    post_finance = PostFinanceCSVFileExtractor
+from expense_report.enums import AccountType
 
 
 class Account:
@@ -21,7 +12,7 @@ class Account:
     Represents an account which has a certain type.
     """
 
-    account_type: AccountTypes
+    account_type: AccountType
 
     def __init__(self, identifier: str, path: Path, excel_file_path: Path):
         self.identifier = identifier
@@ -31,10 +22,10 @@ class Account:
 
     @staticmethod
     def get_account_instance(
-        account_type: AccountTypes, identifier: str, path: Path, excel_file_path: Path
+        account_type: AccountType, identifier: str, path: Path, excel_file_path: Path
     ):
         for subclass in Account.__subclasses__():
-            if subclass.account_type.name == account_type:
+            if subclass.account_type == account_type:
                 return subclass(identifier, path, excel_file_path)
 
     def generate_excel(
@@ -78,12 +69,12 @@ class Account:
 
 
 class CembraAccount(Account):
-    account_type = AccountTypes.cembra
+    account_type = AccountType.cembra
 
 
 class NeonAccount(Account):
-    account_type = AccountTypes.neon
+    account_type = AccountType.neon
 
 
 class PostFinanceAccount(Account):
-    account_type = AccountTypes.post_finance
+    account_type = AccountType.post_finance

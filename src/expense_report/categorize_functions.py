@@ -1,4 +1,4 @@
-from expense_report.private import categories_and_keywords
+from expense_report.private_settings import categories_and_keywords
 
 
 def beschreibung_category(beschreibung):

@@ -165,5 +165,6 @@ cython_debug/
 .DS_Store
 
 # project excludes
-/src/expense_report/private.py
+/src/expense_report/private_settings.py
 TODO.md
+/tests/outputs/

@@ -3,7 +3,7 @@ from pathlib import Path
 from loguru import logger
 
 from expense_report.account import Account
-from expense_report.private import paths_account_files
+from expense_report.private_settings import paths_account_files
 
 
 def main():
