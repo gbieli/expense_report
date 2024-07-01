@@ -9,6 +9,8 @@ class Config:
 
     @classmethod
     def get_paths_account_files(cls):
+        if cls.config is None:
+            return {}
         key = "path_and_account_files"
         if key in cls.config:
             return cls.config[key]
@@ -17,6 +19,8 @@ class Config:
 
     @classmethod
     def get_categories_and_keywords(cls):
+        if cls.config is None:
+            return {}
         key = "categories_and_keywords"
         if key in cls.config:
             return cls.config[key]

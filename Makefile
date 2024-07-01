@@ -9,6 +9,11 @@ static-test:
 unittest:
 	poetry run pytest --cov --cov-fail-under=96 --junit-xml=reports/junit_report.xml
 
+pre-commit:
+	make format
+	make static-test
+	make unittest
+
 audit:
 	poetry show -o
 	poetry audit

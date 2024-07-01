@@ -48,7 +48,8 @@ class NeonCSVFileExtractor(CSVFileExtractor):
 
 
 class PostFinanceCSVFileExtractor(CSVFileExtractor):
-    # Datum;Bewegungstyp;Avisierungstext;Gutschrift in CHF;Lastschrift in CHF;Label;Kategorie
+    # Datum;Bewegungstyp;Avisierungstext;Gutschrift in CHF;
+    # Lastschrift in CHF;Label;Kategorie
     column_names = ColumnNames(
         shop_date="Datum",
         charge="Lastschrift in CHF",
@@ -65,7 +66,7 @@ class PostFinanceCSVFileExtractor(CSVFileExtractor):
             df[self.column_names.shop_date].str.contains(
                 "Disclaimer|Der Dokumentinhalt"
             )
-            == False
+            == False  # noqa: E712
         ]
         # insert and convert
         df = self._insert_convert(df, "%d.%m.%Y")
