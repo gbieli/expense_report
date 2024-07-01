@@ -1,4 +1,4 @@
-from expense_report.private_settings import categories_and_keywords
+from expense_report.config import Config
 
 
 def beschreibung_category(beschreibung):
@@ -19,7 +19,7 @@ def categories_and_keywords_by_keyword():
     :return:
     """
     keywords_and_categories = {}
-    for category, keywords in categories_and_keywords.items():
+    for category, keywords in Config.get_categories_and_keywords().items():
         for keyword in keywords:
             keywords_and_categories[keyword] = category
 
