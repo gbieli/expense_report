@@ -15,7 +15,7 @@ output_folder = Path("tests/outputs")
         (Path("tests/test_data/post"), AccountType.post_finance, "post_hk"),
         (Path("tests/test_data/neon"), AccountType.neon, "neon_private"),
     ],
-    ids=["cembra", "post", "neon"]
+    ids=["cembra", "post", "neon"],
 )
 def test_extractor(path_to_pdf_inputs_folder, account_type, account_id):
     a = Account.get_account_instance(
